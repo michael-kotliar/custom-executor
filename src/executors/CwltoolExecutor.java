@@ -11,8 +11,8 @@ public class CwltoolExecutor {
 
     public static void main(String[] commandLineArguments) {
 
-        final CommandLineParser commandLineParser = new DefaultParser();
-        final Options posixOptions = createOptions();
+        CommandLineParser commandLineParser = new DefaultParser();
+        Options posixOptions = createOptions();
 
         CommandLine commandLine;
         List<String> commandLineArray = Arrays.asList(commandLineArguments);

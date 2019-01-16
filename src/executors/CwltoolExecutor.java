@@ -3,7 +3,7 @@ package executors;
 
 import java.util.Arrays;
 import java.util.List;
-
+import java.io.File;
 import org.apache.commons.cli.*;
 
 
@@ -38,8 +38,10 @@ public class CwltoolExecutor {
 
             String app = commandLine.getArgList().get(0);
             String job = commandLine.getArgList().get(1);
+            File job_file = new File(job);
+            String outdir = job_file.getParent();
 
-            execute(new String[] {"cwltool", app, job});
+            execute(new String[] {"cwltool", "--outdir", outdir, app, job});
 
         } catch (ParseException e) {
             e.printStackTrace();

@@ -1,8 +1,6 @@
 package executors;
 
 
-import java.util.Arrays;
-import java.util.List;
 import java.io.File;
 import org.apache.commons.cli.*;
 
@@ -10,22 +8,10 @@ import org.apache.commons.cli.*;
 public class CwltoolExecutor {
 
     public static void main(String[] commandLineArguments) {
-
         CommandLineParser commandLineParser = new DefaultParser();
         Options posixOptions = createOptions();
-
-        CommandLine commandLine;
-        List<String> commandLineArray = Arrays.asList(commandLineArguments);
-        String[] inputArguments = null;
-
-        if (commandLineArray.contains("--")) {
-            commandLineArguments = commandLineArray.subList(0, commandLineArray.indexOf("--")).toArray(new String[0]);
-            inputArguments = commandLineArray.subList(commandLineArray.indexOf("--") + 1, commandLineArray.size()).toArray(new String[0]);
-        }
-
         try {
-            commandLine = commandLineParser.parse(posixOptions, commandLineArguments);
-
+            CommandLine commandLine = commandLineParser.parse(posixOptions, commandLineArguments);
             if (commandLine.hasOption("h")) {
                 System.out.println("Print usage here and exit");
                 System.exit(0);
@@ -34,14 +20,10 @@ public class CwltoolExecutor {
                 System.out.println("Print version here and exit");
                 System.exit(0);
             }
-            System.out.println(commandLine.getArgList());
-
             String app = commandLine.getArgList().get(0);
             String job = commandLine.getArgList().get(1);
             File job_file = new File(job);
-            String outdir = job_file.getParent();
-
-            execute(new String[] {"cwltool", "--outdir", outdir, app, job});
+            execute(new String[] {"cwltool", "--outdir", job_file.getParent(), app, job});
 
         } catch (ParseException e) {
             e.printStackTrace();

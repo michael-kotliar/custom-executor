@@ -2,6 +2,9 @@ package executors;
 
 
 import org.apache.commons.cli.*;
+import java.util.Scanner;
+import java.io.InputStream;
+import java.io.PrintStream;
 
 
 public class CwltoolExecutor {
@@ -24,15 +27,11 @@ public class CwltoolExecutor {
                 System.exit(0);
             }
 
-            if (commandLine.hasOption("enable-composer-logs")) {
-                System.out.println("Should enable composer logs");
-            }
-
             String app = commandLine.getArgList().get(0);
             String job = commandLine.getArgList().get(1);
             String outdir = commandLine.getOptionValue("outdir");
 
-            execute(new String[] {"cwltool", "--outdir", outdir, app, job});
+            execute(new String[] {"cwltool", "--outdir", outdir, app, job}, commandLine.hasOption("enable-composer-logs"));
 
         } catch (ParseException e) {
             e.printStackTrace();
@@ -49,13 +48,49 @@ public class CwltoolExecutor {
         return options;
     }
 
-    private static void execute(String[] command) {
+    private static void execute(String[] command, boolean enableComposerLogs) {
         try {
             ProcessBuilder pb = new ProcessBuilder(command);
             Process p = pb.start();
+            inheritIO(p.getInputStream(), System.out, enableComposerLogs);
+            inheritIO(p.getErrorStream(), System.err, enableComposerLogs);
             p.waitFor();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    private static void inheritIO(final InputStream src, final PrintStream dest, boolean enableComposerLogs) {
+        new Thread(new Runnable() {
+            public void run() {
+                Scanner sc = new Scanner(src);
+                while (sc.hasNextLine()) {
+                    String line = sc.nextLine();
+                    dest.println(line);
+                    if (enableComposerLogs) {
+                        printComposerLog(line);
+                    }
+                }
+            }
+        }).start();
+    }
+
+    private static void printComposerLog(String line){
+        if (line.contains("[step")) {
+            String stepID = line.substring(6, line.indexOf("]"));
+            String stepStatus = line.substring(line.indexOf("]")+2);
+            if (stepStatus.contains("start")) {
+                stepStatus = "READY";
+            }
+            else if (stepStatus.contains("success")) {
+                stepStatus = "COMPLETED";
+            }
+            else {
+                stepStatus = "FAILED";
+            };
+            String composerStatus = "Composer: {\"status\": \"" + stepStatus + "\", \"stepId\": \"root." + stepID + "\"}";
+            System.err.println(composerStatus);
+        }
+    }
+
 }
